@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { chromium } from "playwright";
+import { ensureOutputDirectory, writeArtifactFile } from "./artifact_output.mjs";
 
 function parseArgs(argv) {
   const args = {
@@ -9,6 +10,7 @@ function parseArgs(argv) {
     pauseMs: 250,
     headless: true,
     screenshotDir: "output/web-game",
+    screenshotDirExplicit: false,
     actionsFile: null,
     actionsJson: null,
     click: null,
@@ -31,6 +33,7 @@ function parseArgs(argv) {
       i++;
     } else if (arg === "--screenshot-dir" && next) {
       args.screenshotDir = next;
+      args.screenshotDirExplicit = true;
       i++;
     } else if (arg === "--actions-file" && next) {
       args.actionsFile = next;
@@ -68,10 +71,6 @@ const buttonNameToKey = {
 
 async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function ensureDir(p) {
-  fs.mkdirSync(p, { recursive: true });
 }
 
 function makeVirtualTimeShim() {
@@ -174,7 +173,7 @@ async function isCanvasTransparent(canvas) {
   });
 }
 
-async function captureScreenshot(page, canvas, outPath) {
+async function captureScreenshot(page, canvas, outPath, outputOptions) {
   let buffer = null;
   let base64 = canvas ? await captureCanvasPngBase64(canvas) : "";
   if (base64) {
@@ -201,7 +200,7 @@ async function captureScreenshot(page, canvas, outPath) {
       buffer = await page.screenshot({ type: "png", omitBackground: false });
     }
   }
-  fs.writeFileSync(outPath, buffer);
+  writeArtifactFile(outPath, buffer, outputOptions);
 }
 
 class ConsoleErrorTracker {
@@ -261,7 +260,11 @@ async function doChoreography(page, canvas, steps) {
 
 async function main() {
   const args = parseArgs(process.argv);
-  ensureDir(args.screenshotDir);
+  const outputOptions = {
+    cwd: process.cwd(),
+    allowExternal: args.screenshotDirExplicit,
+  };
+  const outputDir = ensureOutputDirectory(args.screenshotDir, outputOptions);
 
   const browser = await chromium.launch({
     headless: args.headless,
@@ -324,8 +327,8 @@ async function main() {
     await doChoreography(page, canvas, steps);
     await sleep(args.pauseMs);
 
-    const shotPath = path.join(args.screenshotDir, `shot-${i}.png`);
-    await captureScreenshot(page, canvas, shotPath);
+    const shotPath = path.join(outputDir, `shot-${i}.png`);
+    await captureScreenshot(page, canvas, shotPath, outputOptions);
 
     const text = await page.evaluate(() => {
       if (typeof window.render_game_to_text === "function") {
@@ -334,14 +337,15 @@ async function main() {
       return null;
     });
     if (text) {
-      fs.writeFileSync(path.join(args.screenshotDir, `state-${i}.json`), text);
+      writeArtifactFile(path.join(outputDir, `state-${i}.json`), text, outputOptions);
     }
 
     const freshErrors = consoleErrors.drain();
     if (freshErrors.length) {
-      fs.writeFileSync(
-        path.join(args.screenshotDir, `errors-${i}.json`),
-        JSON.stringify(freshErrors, null, 2)
+      writeArtifactFile(
+        path.join(outputDir, `errors-${i}.json`),
+        JSON.stringify(freshErrors, null, 2),
+        outputOptions
       );
       break;
     }
