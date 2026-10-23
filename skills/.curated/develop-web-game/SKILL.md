@@ -18,6 +18,12 @@ export WEB_GAME_ACTIONS="$CODEX_HOME/skills/develop-web-game/references/action_p
 
 User-scoped skills install under `$CODEX_HOME/skills` (default: `~/.codex/skills`).
 
+The Playwright client writes its default artifacts under the current workspace and rechecks that output path
+before each write, rejecting symbolic-link components. To write elsewhere, pass an explicit `--screenshot-dir`;
+that opts into the selected external directory, including its existing directory links. Existing artifact files
+are replaced atomically so file symlinks and hardlinks are not followed. Keep the output directory stable while
+the client runs; portable Node path APIs can’t prevent a concurrent local process from swapping a checked directory.
+
 ## Workflow
 
 1. **Pick a goal.** Define a single feature or behavior to implement.
