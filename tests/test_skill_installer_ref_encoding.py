@@ -5,6 +5,7 @@ import tempfile
 import unittest
 import urllib.error
 import urllib.parse
+import urllib.request
 from unittest.mock import patch
 
 
@@ -21,19 +22,14 @@ SPEC.loader.exec_module(installer)
 
 class SkillInstallerRefEncodingTest(unittest.TestCase):
     def _download_url_for_ref(self, ref: str) -> str:
-        requested_urls = []
-
-        def reject_request(url: str) -> bytes:
-            requested_urls.append(url)
-            raise urllib.error.HTTPError(url, 404, "not found", None, None)
-
+        error = urllib.error.HTTPError("https://example.invalid", 404, "not found", None, None)
         with tempfile.TemporaryDirectory() as temp_dir:
-            with patch.object(installer, "_request", side_effect=reject_request):
+            with patch.object(urllib.request, "urlopen", side_effect=error) as urlopen:
                 with self.assertRaises(installer.InstallError):
                     installer._download_repo_zip("owner", "repo", ref, temp_dir)
 
-        self.assertEqual(len(requested_urls), 1)
-        return requested_urls[0]
+        urlopen.assert_called_once()
+        return urlopen.call_args.args[0].full_url
 
     def test_download_ref_is_quoted_without_losing_branch_slashes(self) -> None:
         cases = {
