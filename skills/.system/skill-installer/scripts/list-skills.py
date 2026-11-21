@@ -9,7 +9,11 @@ import os
 import sys
 import urllib.error
 
-from github_utils import github_api_contents_url, github_request
+from github_utils import (
+    GithubResponseTooLarge,
+    github_api_contents_url,
+    github_request,
+)
 
 DEFAULT_REPO = "openai/skills"
 DEFAULT_PATH = "skills/.curated"
@@ -51,6 +55,8 @@ def _list_skills(repo: str, path: str, ref: str) -> list[str]:
     api_url = github_api_contents_url(repo, path, ref)
     try:
         payload = _request(api_url)
+    except GithubResponseTooLarge as exc:
+        raise ListError("Failed to fetch skills: response exceeds size limit.") from exc
     except urllib.error.HTTPError as exc:
         if exc.code == 404:
             raise ListError(

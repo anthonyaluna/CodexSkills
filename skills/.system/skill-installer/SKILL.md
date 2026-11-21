@@ -48,6 +48,7 @@ All of these scripts use network, so when running in the sandbox, request escala
 - Installs into `$CODEX_HOME/skills/<skill-name>` (defaults to `~/.codex/skills`).
 - Multiple `--path` values install multiple skills in one run, each named from the path basename unless `--name` is supplied.
 - Options: `--ref <ref>` (default `main`), `--dest <path>`, `--method auto|download|git`.
+- Download mode accepts stored/deflate ZIP entries and limits archives to 128 MiB compressed, 256 MiB extracted, 20,000 entries, a 16 MiB central directory, 4,096-character paths, 255-character path components, 64 path components, and 20,000 created directories. Larger or unsupported archives are rejected; the separate Git method is not covered by these ZIP limits and should be used only with trusted sources.
 
 ## Notes
 
