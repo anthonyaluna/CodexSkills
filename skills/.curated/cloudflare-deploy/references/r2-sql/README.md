@@ -92,8 +92,9 @@ npx wrangler r2 bucket catalog enable my-bucket
 # 2. Create API token (Admin Read & Write)
 # Dashboard: R2 → Manage API tokens → Create API token
 
-# 3. Set environment variable
-export WRANGLER_R2_SQL_AUTH_TOKEN=<your-token>
+# 3. Supply WRANGLER_R2_SQL_AUTH_TOKEN through your secret manager.
+# Check that the current shell received it (exit status 0 means present).
+test "${WRANGLER_R2_SQL_AUTH_TOKEN:+set}" = set
 
 # 4. Run query
 npx wrangler r2 sql query "my-bucket" "SELECT * FROM default.my_table LIMIT 10"
