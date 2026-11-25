@@ -16,9 +16,8 @@ http_headers = { "X-Figma-Region" = "us-east-1" }
 - Optional per-server timeouts: `startup_timeout_sec` (default 10) and `tool_timeout_sec` (default 60) can be set inside `[mcp_servers.figma]` if needed.
 
 ## Env var setup (if missing)
-- One-time set for current shell: `export FIGMA_OAUTH_TOKEN="<token>"`
-- Persist for future sessions: add the export line to your shell profile (e.g., `~/.zshrc` or `~/.bashrc`), then restart the shell or your IDE.
-- Verify before launching Codex: `echo $FIGMA_OAUTH_TOKEN` should print a non-empty token.
+- Supply `FIGMA_OAUTH_TOKEN` through your secret manager to the shell or IDE that starts Codex.
+- Run `test "${FIGMA_OAUTH_TOKEN:+set}" = set` in that environment. Exit status 0 means the token is present.
 
 ## Setup + verification checklist
 - Add the snippet above to `~/.codex/config.toml` under `[mcp_servers.figma]`, and enable `[features].rmcp_client = true` (or `experimental_use_rmcp_client = true` on older releases).
@@ -26,7 +25,7 @@ http_headers = { "X-Figma-Region" = "us-east-1" }
 - Ask Codex to list Figma tools or run a simple call to confirm the server is reachable.
 
 ## Troubleshooting
-- Token not picked up: Export `FIGMA_OAUTH_TOKEN` in the same shell that launches Codex, or add it to your shell profile and restart.
+- If Codex cannot pick up the token, restart it from the environment that received `FIGMA_OAUTH_TOKEN`.
 - OAuth errors: Verify `rmcp_client` is enabled and the bearer token is valid. Tokens copied from Figma should not include surrounding quotes.
 - Network/headers: Keep the `X-Figma-Region` header; if your org uses another region, update the header consistently across config and requests.
 

@@ -93,12 +93,8 @@ WHERE timestamp > '2025-01-01T00:00:00Z'
 
 ### "Token authentication failed"
 ```bash
-# Check/set token
-echo $WRANGLER_R2_SQL_AUTH_TOKEN
-export WRANGLER_R2_SQL_AUTH_TOKEN=<your-token>
-
-# Or .env file
-echo "WRANGLER_R2_SQL_AUTH_TOKEN=<your-token>" > .env
+# Supply WRANGLER_R2_SQL_AUTH_TOKEN through your secret manager.
+test "${WRANGLER_R2_SQL_AUTH_TOKEN:+set}" = set && echo "R2 SQL token is configured"
 ```
 
 ### "Table not found"
@@ -196,7 +192,7 @@ WHERE timestamp >= '2025-01-15T00:00:00Z' AND status = 404 AND method = 'GET' LI
 ## Debugging Checklist
 
 1. `npx wrangler r2 bucket catalog enable <bucket>` - Verify catalog
-2. `echo $WRANGLER_R2_SQL_AUTH_TOKEN` - Check token
+2. Check that the token is present with `test "${WRANGLER_R2_SQL_AUTH_TOKEN:+set}" = set`. A nonzero status means the token is empty or unset.
 3. `SHOW DATABASES` - List namespaces
 4. `SHOW TABLES IN namespace` - List tables
 5. `DESCRIBE namespace.table` - Check schema

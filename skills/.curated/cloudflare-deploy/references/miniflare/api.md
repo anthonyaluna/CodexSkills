@@ -71,7 +71,7 @@ const result = await worker.queue("queue-name", [
 ```js
 // Basic usage
 const bindings = await mf.getBindings();
-console.log(bindings.SECRET_KEY);
+console.log("SECRET_KEY configured:", Boolean(bindings.SECRET_KEY));
 
 // With type safety (recommended):
 interface Env {
